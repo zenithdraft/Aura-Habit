@@ -1,0 +1,55 @@
+name: Build and Sign Release APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build unsigned release APK
+      run: ./gradlew assembleRelease --stacktrace
+
+    - name: Sign release APK
+      id: sign_apk
+      run: |
+        UNSIGNED_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+        if [ ! -f "$UNSIGNED_APK" ]; then
+          echo "ERROR: Unsigned release APK not found at $UNSIGNED_APK"
+          exit 1
+        fi
+        echo "Signing APK..."
+        echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > release.keystore
+        jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+          -keystore release.keystore \
+          -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+          -keypass "${{ secrets.KEY_PASSWORD }}" \
+          "$UNSIGNED_APK" "${{ secrets.ALIAS_NAME }}"
+        mv "$UNSIGNED_APK" app-release-signed.apk
+      env:
+        KEYSTORE_FILE_BASE64: ${{ secrets.KEYSTORE_FILE_BASE64 }}
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        ALIAS_NAME: ${{ secrets.ALIAS_NAME }}
+
+    - name: Upload Signed Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-signed
+        path: app-release-signed.apk

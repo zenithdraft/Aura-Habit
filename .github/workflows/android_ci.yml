@@ -39,7 +39,14 @@ jobs:
           -keystore app/release.keystore \
           -storepass $KEYSTORE_PASSWORD \
           -keypass $KEY_PASSWORD \
-          app/build/outputs/apk/release/app-release-unsigned.apk alias_name
+          app/build/outputs/apk/release/app-release-unsigned.apk $ALIAS_NAME
+        # Rename the signed APK to the final release name
+        mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/app-release.apk
+      env:
+        KEYSTORE_FILE_BASE64: ${{ secrets.KEYSTORE_FILE_BASE64 }}
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        ALIAS_NAME: ${{ secrets.ALIAS_NAME }}
 
     - name: Upload debug APK
       uses: actions/upload-artifact@v4

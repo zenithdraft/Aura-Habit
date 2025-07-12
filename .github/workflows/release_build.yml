@@ -29,7 +29,7 @@ jobs:
     - name: Sign release APK
       id: sign_apk
       run: |
-        UNSIGNED_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+        UNSIGNED_APK="app/build/outputs/apk/release/app-release.apk"
         if [ ! -f "$UNSIGNED_APK" ]; then
           echo "ERROR: Unsigned release APK not found at $UNSIGNED_APK"
           exit 1

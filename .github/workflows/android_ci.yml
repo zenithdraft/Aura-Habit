@@ -26,7 +26,7 @@ jobs:
       run: chmod +x gradlew
 
     - name: Build debug and release APKs
-      run: ./gradlew assembleDebug assembleRelease
+      run: ./gradlew assembleDebug assembleRelease --stacktrace
 
     - name: Sign release APK
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'

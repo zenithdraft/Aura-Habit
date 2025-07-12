@@ -34,7 +34,7 @@ jobs:
     - name: Sign release APK
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
-        echo -n "$KEYSTORE_FILE_BASE64" | base64 --decode > app/release.keystore
+        echo "$KEYSTORE_FILE_BASE64" | base64 --decode > app/release.keystore
         jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
           -keystore app/release.keystore \
           -storepass $KEYSTORE_PASSWORD \

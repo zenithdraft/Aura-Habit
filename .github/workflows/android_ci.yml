@@ -25,23 +25,29 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build debug APK
-      run: ./gradlew assembleDebug
-
-    - name: Build release APK
-      run: ./gradlew assembleRelease
+    - name: Build debug and release APKs
+      run: ./gradlew assembleDebug assembleRelease
 
     - name: Sign release APK
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
+        # First, check if the unsigned APK exists
+        UNSIGNED_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+        if [ ! -f "$UNSIGNED_APK" ]; then
+          echo "ERROR: Unsigned release APK not found at $UNSIGNED_APK"
+          exit 1
+        fi
+        
+        echo "Signing APK..."
         echo "$KEYSTORE_FILE_BASE64" | base64 --decode > app/release.keystore
         jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
           -keystore app/release.keystore \
           -storepass $KEYSTORE_PASSWORD \
           -keypass $KEY_PASSWORD \
-          app/build/outputs/apk/release/app-release-unsigned.apk $ALIAS_NAME
+          "$UNSIGNED_APK" $ALIAS_NAME
+          
         # Rename the signed APK to the final release name
-        mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/app-release.apk
+        mv "$UNSIGNED_APK" app/build/outputs/apk/release/app-release.apk
       env:
         KEYSTORE_FILE_BASE64: ${{ secrets.KEYSTORE_FILE_BASE64 }}
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
